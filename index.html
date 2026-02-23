@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Carolina & Erick — Comparte tus fotos</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root {
+      --cream: #f7f4fb;
+      --gold: #7b5ea7;
+      --gold-light: #a480c8;
+      --dark: #1a0a2e;
+      --brown: #4a2d6b;
+      --muted: #7a6890;
+      --border: rgba(123,94,167,0.25);
+      --error: #c0392b;
+      --success-bg: #f4f0fb;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      min-height: 100%;
+      font-family: 'Raleway', sans-serif;
+      font-weight: 300;
+      color: var(--dark);
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem 1.5rem 3rem;
+      background: transparent;
+    }
+
+    .tarjeta {
+      background: #fff;
+      border: 1px solid var(--border);
+      padding: 2.8rem 2.5rem 2.5rem;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      position: relative;
+    }
+
+    .tarjeta::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        radial-gradient(circle at 85% 8%, rgba(123,94,167,0.07) 0%, transparent 55%),
+        radial-gradient(circle at 15% 92%, rgba(160,128,200,0.06) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    @keyframes aparecer {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .ornamento {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .ornamento-linea {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    .ornamento-icono {
+      font-size: 0.9rem;
+      color: var(--gold);
+      line-height: 1;
+    }
+
+    .fecha {
+      font-family: 'Raleway', sans-serif;
+      font-weight: 300;
+      font-size: 0.76rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+    }
+
+    .mensaje {
+      font-family: 'Playfair Display', serif;
+      font-size: 0.95rem;
+      font-style: italic;
+      color: var(--muted);
+      line-height: 1.6;
+      margin: 1.4rem 0 1.8rem;
+      padding: 0 0.5rem;
+    }
+
+    .zona-subida {
+      border: 1.5px dashed var(--border);
+      padding: 2rem 1.5rem;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      background: var(--cream);
+      position: relative;
+      margin-bottom: 1.25rem;
+    }
+
+    .zona-subida:hover,
+    .zona-subida.activa {
+      border-color: var(--gold-light);
+      background: rgba(123,94,167,0.05);
+    }
+
+    .zona-icono {
+      font-size: 3.45rem;
+      margin-bottom: 0.6rem;
+      display: block;
+    }
+
+    .zona-texto-principal {
+      font-family: 'Raleway', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 400;
+      color: var(--dark);
+      margin-bottom: 0.3rem;
+    }
+
+    .zona-texto-secundario {
+      font-size: 0.72rem;
+      font-weight: 300;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+    }
+
+    #input-fotos {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .btn-subir {
+      display: none;
+      width: 100%;
+      padding: 0.85rem 1.5rem;
+      background: var(--gold);
+      color: white;
+      border: none;
+      font-family: 'Raleway', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 400;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.15s ease;
+      margin-bottom: 1rem;
+    }
+
+    .btn-subir:hover:not(:disabled) {
+      background: var(--brown);
+      transform: translateY(-1px);
+    }
+
+    .btn-subir:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .progreso-contenedor {
+      display: none;
+      margin-bottom: 1rem;
+    }
+
+    .progreso-texto {
+      font-size: 0.75rem;
+      font-weight: 300;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.08em;
+    }
+
+    .progreso-barra-fondo {
+      width: 100%;
+      height: 3px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .progreso-barra {
+      height: 100%;
+      background: linear-gradient(to right, var(--gold-light), var(--gold));
+      border-radius: 99px;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+
+    .fotos-seleccionadas {
+      display: none;
+      font-size: 0.75rem;
+      color: var(--gold);
+      font-weight: 300;
+      margin-bottom: 1rem;
+      letter-spacing: 0.05em;
+    }
+
+    .exito {
+      display: none;
+      animation: aparecer 0.6s ease both;
+    }
+
+    .exito-icono {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .exito-titulo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem;
+      font-style: italic;
+      font-weight: 400;
+      color: var(--dark);
+      margin-bottom: 0.5rem;
+    }
+
+    .exito-mensaje {
+      font-size: 0.8rem;
+      font-weight: 300;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
+    }
+
+    .btn-subir-mas {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--gold);
+      padding: 0.65rem 1.5rem;
+      font-family: 'Raleway', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-subir-mas:hover {
+      border-color: var(--gold-light);
+      background: rgba(123,94,167,0.06);
+    }
+
+    /* ── CONTADOR ── */
+    .contador-global {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .contador-numero {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.5rem;
+      font-weight: 400;
+      color: var(--gold);
+      line-height: 1;
+    }
+
+    @keyframes bump {
+      0%   { transform: scale(1); }
+      40%  { transform: scale(1.3); }
+      100% { transform: scale(1); }
+    }
+    .contador-numero.bump {
+      animation: bump 0.4s ease;
+    }
+
+    .contador-etiqueta {
+      font-size: 0.68rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-weight: 300;
+      color: var(--muted);
+      margin-top: 0.3rem;
+    }
+
+    .error-msg {
+      display: none;
+      font-size: 0.75rem;
+      color: var(--error);
+      font-weight: 300;
+      margin-top: 0.5rem;
+      padding: 0.5rem;
+      background: rgba(192,57,43,0.06);
+    }
+
+    .pie {
+      margin-top: 1.5rem;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 300;
+    }
+
+    /* LANGUAGE PICKER */
+    .lang-picker {
+      position: absolute;
+      top: 0.9rem;
+      right: 1.8rem;
+      z-index: 10;
+    }
+    .lang-select-wrap {
+      position: relative;
+      display: inline-block;
+    }
+    .lang-select-wrap::after {
+      content: '▾';
+      position: absolute;
+      right: 0.1rem; top: 50%;
+      transform: translateY(-50%);
+      color: var(--gold);
+      font-size: 0.72rem;
+      pointer-events: none;
+    }
+    .lang-select {
+      appearance: none;
+      -webkit-appearance: none;
+      font-family: 'Raleway', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: transparent;
+      border: none;
+      border-bottom: 1px dashed var(--border);
+      padding: 0.25rem 1.3rem 0.25rem 0.1rem;
+      cursor: pointer;
+      outline: none;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .lang-select:hover,
+    .lang-select:focus { color: var(--gold); border-color: var(--gold); }
+
+    @keyframes langPulse {
+      0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(123,94,167,0); }
+      30%  { transform: scale(1.18); box-shadow: 0 0 0 6px rgba(123,94,167,0.25); }
+      60%  { transform: scale(1);    box-shadow: 0 0 0 10px rgba(123,94,167,0); }
+      100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(123,94,167,0); }
+    }
+    @keyframes langCycleHighlight {
+      0%   { color: var(--muted); border-color: var(--border); }
+      20%  { color: var(--gold);  border-color: var(--gold); }
+      50%  { color: var(--muted); border-color: var(--border); }
+      100% { color: var(--muted); border-color: var(--border); }
+    }
+    @keyframes langTooltipFade {
+      0%   { opacity: 0; transform: translateY(4px); }
+      15%  { opacity: 1; transform: translateY(0); }
+      75%  { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-4px); }
+    }
+    .lang-picker.hinting .lang-select-wrap { animation: langPulse 0.9s ease 0.6s 2; }
+    .lang-picker.hinting .lang-select      { animation: langCycleHighlight 1.8s ease 0.6s 1 forwards; }
+
+    .lang-tooltip {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      background: var(--brown);
+      color: #fff;
+      font-family: 'Raleway', sans-serif;
+      font-size: 0.62rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      padding: 0.35rem 0.7rem;
+      border-radius: 3px;
+      pointer-events: none;
+      opacity: 0;
+      animation: langTooltipFade 2.8s ease 0.4s 1 forwards;
+    }
+    .lang-tooltip::before {
+      content: '';
+      position: absolute;
+      bottom: 100%; right: 10px;
+      border: 5px solid transparent;
+      border-bottom-color: var(--brown);
+    }
+
+    .wrapper {
+      width: 100%;
+      max-width: 500px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .floral-frame-left,
+    .floral-frame-right {
+      position: absolute;
+      top: -10px; bottom: 25px;
+      width: 48px;
+      pointer-events: none;
+      z-index: 3;
+    }
+    .floral-frame-left  { left: -7px; }
+    .floral-frame-right { right: -7px; transform: scaleX(-1); }
+
+    .floral-frame-left::after,
+    .floral-frame-right::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-image-source: url('frame.png');
+      border-image-slice: 700 0 700 0 fill;
+      border-image-width: 82px 0 82px 0;
+      border-image-repeat: stretch;
+      border-style: solid;
+      border-color: transparent;
+      border-width: 82px 0 82px 0;
+    }
+
+    .floral-header-img {
+      display: block;
+      width: 118px;
+      margin: 0 auto 0.6rem;
+      pointer-events: none;
+      opacity: 0.88;
+    }
+
+    .couple-names {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1.56rem;
+      color: var(--gold);
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.04em;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wrapper">
+    <div class="floral-frame-left"></div>
+    <div class="floral-frame-right"></div>
+
+    <div class="tarjeta">
+
+      <!-- LANGUAGE PICKER -->
+      <div class="lang-picker" id="langPicker">
+        <div class="lang-select-wrap">
+          <select class="lang-select" onchange="setLang(this.value)" aria-label="Language">
+            <option value="en">EN</option>
+            <option value="fr">FR</option>
+            <option value="es">ES</option>
+          </select>
+        </div>
+        <div class="lang-tooltip" id="langTooltip">Change language</div>
+      </div>
+
+      <img class="floral-header-img" src="Flowers.png" alt="flowers"/>
+
+      <p class="fecha" id="i18n-fecha">March 14th · 2026</p>
+      <div class="couple-names">Carolina &amp; Erick</div>
+      <p class="mensaje" id="i18n-mensaje">
+        Every photo you share becomes part of our story.<br>
+        Thank you for being here with us.
+      </p>
+
+      <!-- Formulario -->
+      <div id="seccion-subida">
+        <div class="zona-subida" id="zona">
+          <input type="file" id="input-fotos" accept="image/*" multiple />
+          <span class="zona-icono">📷</span>
+          <p class="zona-texto-principal" id="i18n-zonaPrincipal">Tap here to choose your photos</p>
+          <p class="zona-texto-secundario" id="i18n-zonaSecundario">JPG, PNG, HEIC · Max 10 photos at a time</p>
+        </div>
+
+        <p class="fotos-seleccionadas" id="fotos-seleccionadas"></p>
+        <button class="btn-subir" id="btn-subir">Share photos</button>
+
+        <div class="progreso-contenedor" id="progreso-contenedor">
+          <p class="progreso-texto" id="progreso-texto"></p>
+          <div class="progreso-barra-fondo">
+            <div class="progreso-barra" id="progreso-barra"></div>
+          </div>
+        </div>
+
+        <p class="error-msg" id="error-msg"></p>
+      </div>
+
+      <!-- Éxito -->
+      <div class="exito" id="exito">
+        <span class="exito-icono">🌸</span>
+        <p class="exito-titulo" id="i18n-exitoTitulo">Thank you!</p>
+        <p class="exito-mensaje" id="i18n-exitoMensaje">
+          Your photos are now part of<br>
+          this very special day for us.
+        </p>
+        <button class="btn-subir-mas" id="btn-subir-mas">Upload more photos</button>
+      </div>
+
+      <!-- Contador -->
+      <div class="contador-global">
+        <div class="contador-numero" id="contador-numero">0</div>
+        <p class="contador-etiqueta" id="i18n-contadorEtiqueta">photos shared today</p>
+      </div>
+
+      <div class="ornamento" style="margin-top:2rem; margin-bottom:0;">
+        <div class="ornamento-linea"></div>
+        <div class="ornamento-icono">✦</div>
+        <div class="ornamento-linea"></div>
+      </div>
+
+    </div>
+
+    <p class="pie" id="i18n-pie">Private · For guests only</p>
+  </div>
+
+
+  <script>
+    // ══════════════════════════════════════════
+    // CONFIGURACIÓN
+    // ══════════════════════════════════════════
+    const CLOUD_NAME    = 'ditphx6hi';
+    const UPLOAD_PRESET = 'boda-marzo-2026';  // ← año corregido
+    const CARPETA       = 'boda-marzo-2026';  // ← año corregido
+    const MAX_FOTOS     = 10;
+    const MAX_MB        = 25;
+
+    // ══════════════════════════════════════════
+    // CONTADOR LOCAL
+    // Guarda el total en el navegador del invitado.
+    // Se acumula durante todo el evento mientras
+    // no se cierre el navegador.
+    // Para resetearlo antes del evento: ve a
+    // Cloudinary > Media Library > boda-marzo-2026
+    // y elimina las fotos de prueba.
+    // El contador del navegador se limpia solo
+    // cuando el invitado cierra la página.
+    // ══════════════════════════════════════════
+    const CONTADOR_KEY = 'boda_2026_total';
+
+    function leerContador() {
+      return parseInt(sessionStorage.getItem(CONTADOR_KEY) || '0', 10);
+    }
+
+    function sumarAlContador(n) {
+      const nuevo = leerContador() + n;
+      sessionStorage.setItem(CONTADOR_KEY, nuevo);
+      return nuevo;
+    }
+
+    function mostrarContador(n) {
+      const el = document.getElementById('contador-numero');
+      el.textContent = n;
+      el.classList.remove('bump');
+      void el.offsetWidth;
+      el.classList.add('bump');
+    }
+
+    mostrarContador(leerContador());
+
+    // ══════════════════════════════════════════
+    // TRADUCCIONES
+    // ══════════════════════════════════════════
+    const TRANSLATIONS = {
+      en: {
+        fecha:           'March 14th · 2026',
+        mensaje:         'Every photo you share becomes part of our story.<br>Thank you for being here with us.',
+        zonaPrincipal:   'Tap here to choose your photos',
+        zonaSecundario:  'JPG, PNG, HEIC · Max 10 photos at a time',
+        shareBtn:        'Share photos',
+        uploading:       'Uploading photo {i} of {total}…',
+        exitoTitulo:     'Thank you!',
+        exitoMensaje:    'Your photos are now part of<br>this very special day for us.',
+        uploadMoreBtn:   'Upload more photos',
+        contadorEtiqueta:'photos shared today',
+        pie:             'Private · For guests only',
+        errMax:          'Please select a maximum of {max} photos at a time.',
+        errSize:         'Some photos exceed {mb}MB. Please select them individually.',
+        errUpload:       'There was a problem uploading. Check your connection and try again.',
+        errPartial:      '{ok} photo(s) uploaded. {fail} failed — please try those again.',
+        selectedPhotos:  '{n} photo(s) selected',
+        langTooltip:     'Change language',
+      },
+      fr: {
+        fecha:           '14 mars · 2026',
+        mensaje:         "Chaque photo que vous partagez fait partie de notre histoire.<br>Merci d'être là avec nous.",
+        zonaPrincipal:   'Appuyez ici pour choisir vos photos',
+        zonaSecundario:  'JPG, PNG, HEIC · Maximum 10 photos à la fois',
+        shareBtn:        'Partager les photos',
+        uploading:       'Envoi de la photo {i} sur {total}…',
+        exitoTitulo:     'Merci !',
+        exitoMensaje:    'Vos photos font maintenant partie<br>de ce jour si spécial pour nous.',
+        uploadMoreBtn:   "Envoyer d'autres photos",
+        contadorEtiqueta:"photos partagées aujourd'hui",
+        pie:             'Privé · Réservé aux invités',
+        errMax:          'Veuillez sélectionner au maximum {max} photos à la fois.',
+        errSize:         'Certaines photos dépassent {mb}Mo. Sélectionnez-les individuellement.',
+        errUpload:       "Un problème est survenu. Vérifiez votre connexion et réessayez.",
+        errPartial:      '{ok} photo(s) envoyée(s). {fail} ont échoué — réessayez.',
+        selectedPhotos:  '{n} photo(s) sélectionnée(s)',
+        langTooltip:     'Changer de langue',
+      },
+      es: {
+        fecha:           '14 de marzo · 2026',
+        mensaje:         'Cada foto que compartes se convierte en parte de nuestra historia.<br>Gracias por estar aquí con nosotros.',
+        zonaPrincipal:   'Toca aquí para elegir tus fotos',
+        zonaSecundario:  'JPG, PNG, HEIC · Máximo 10 fotos a la vez',
+        shareBtn:        'Compartir fotos',
+        uploading:       'Subiendo foto {i} de {total}…',
+        exitoTitulo:     '¡Gracias!',
+        exitoMensaje:    'Tus fotos ya forman parte de<br>este día tan especial para nosotros.',
+        uploadMoreBtn:   'Subir más fotos',
+        contadorEtiqueta:'fotos compartidas hoy',
+        pie:             'Privado · Solo para invitados',
+        errMax:          'Por favor selecciona máximo {max} fotos a la vez.',
+        errSize:         'Algunas fotos superan los {mb}MB. Selecciónalas individualmente.',
+        errUpload:       'Hubo un problema al subir. Verifica tu conexión e intenta de nuevo.',
+        errPartial:      '{ok} foto(s) subida(s). {fail} fallaron — intenta de nuevo con ellas.',
+        selectedPhotos:  '{n} foto(s) seleccionada(s)',
+        langTooltip:     'Cambiar idioma',
+      }
+    };
+
+    let currentLang = 'en';
+
+    function t(key, vars) {
+      let str = (TRANSLATIONS[currentLang] || TRANSLATIONS.en)[key] || TRANSLATIONS.en[key] || key;
+      if (vars) Object.keys(vars).forEach(k => { str = str.replaceAll('{' + k + '}', vars[k]); });
+      return str;
+    }
+
+    function setLang(lang) {
+      currentLang = lang;
+      document.querySelector('.lang-select').value = lang;
+      applyTranslations();
+    }
+
+    function applyTranslations() {
+      const setHTML = (id, key, vars) => { const el = document.getElementById(id); if (el) el.innerHTML = t(key, vars); };
+      const setText = (id, key, vars) => { const el = document.getElementById(id); if (el) el.textContent = t(key, vars); };
+
+      setHTML('i18n-fecha',            'fecha');
+      setHTML('i18n-mensaje',          'mensaje');
+      setText('i18n-zonaPrincipal',    'zonaPrincipal');
+      setText('i18n-zonaSecundario',   'zonaSecundario');
+      setText('i18n-exitoTitulo',      'exitoTitulo');
+      setHTML('i18n-exitoMensaje',     'exitoMensaje');
+      setText('i18n-contadorEtiqueta', 'contadorEtiqueta');
+      setText('i18n-pie',              'pie');
+      setText('langTooltip',           'langTooltip');
+
+      const btnSubir = document.getElementById('btn-subir');
+      if (btnSubir && !btnSubir.disabled) btnSubir.textContent = t('shareBtn');
+      const btnMas = document.getElementById('btn-subir-mas');
+      if (btnMas) btnMas.textContent = t('uploadMoreBtn');
+    }
+
+    applyTranslations();
+
+    setTimeout(() => {
+      const picker = document.getElementById('langPicker');
+      if (picker) {
+        picker.classList.add('hinting');
+        setTimeout(() => picker.classList.remove('hinting'), 3000);
+      }
+    }, 1200);
+
+    // ══════════════════════════════════════════
+    // DOM
+    // ══════════════════════════════════════════
+    const inputFotos         = document.getElementById('input-fotos');
+    const btnSubir           = document.getElementById('btn-subir');
+    const zona               = document.getElementById('zona');
+    const fotosSeleccionadas = document.getElementById('fotos-seleccionadas');
+    const progresoCont       = document.getElementById('progreso-contenedor');
+    const progresoTexto      = document.getElementById('progreso-texto');
+    const progresoBarra      = document.getElementById('progreso-barra');
+    const errorMsg           = document.getElementById('error-msg');
+    const seccionSubida      = document.getElementById('seccion-subida');
+    const exitoDiv           = document.getElementById('exito');
+    const btnSubirMas        = document.getElementById('btn-subir-mas');
+
+    let archivosSeleccionados = [];
+
+    inputFotos.addEventListener('change', () => {
+      const archivos = Array.from(inputFotos.files);
+      ocultarError();
+      if (!archivos.length) return;
+
+      if (archivos.length > MAX_FOTOS) {
+        mostrarError(t('errMax', { max: MAX_FOTOS }));
+        inputFotos.value = '';
+        return;
+      }
+
+      const demasiadoGrandes = archivos.filter(f => f.size > MAX_MB * 1024 * 1024);
+      if (demasiadoGrandes.length) {
+        mostrarError(t('errSize', { mb: MAX_MB }));
+        inputFotos.value = '';
+        return;
+      }
+
+      archivosSeleccionados = archivos;
+      fotosSeleccionadas.style.display = 'block';
+      fotosSeleccionadas.textContent = t('selectedPhotos', { n: archivos.length });
+      btnSubir.style.display = 'block';
+    });
+
+    zona.addEventListener('dragover', (e) => { e.preventDefault(); zona.classList.add('activa'); });
+    zona.addEventListener('dragleave', () => zona.classList.remove('activa'));
+    zona.addEventListener('drop', (e) => {
+      e.preventDefault();
+      zona.classList.remove('activa');
+      inputFotos.files = e.dataTransfer.files;
+      inputFotos.dispatchEvent(new Event('change'));
+    });
+
+    btnSubir.addEventListener('click', async () => {
+      if (!archivosSeleccionados.length) return;
+
+      btnSubir.disabled = true;
+      progresoCont.style.display = 'block';
+      ocultarError();
+
+      let subidas = 0;
+      let errores = 0;
+
+      for (let i = 0; i < archivosSeleccionados.length; i++) {
+        const total = archivosSeleccionados.length;
+        progresoTexto.textContent = t('uploading', { i: i + 1, total });
+        actualizarBarra(Math.round((i / total) * 100));
+
+        try {
+          await subirArchivo(archivosSeleccionados[i]);
+          subidas++;
+        } catch (e) {
+          errores++;
+          console.error('Error:', archivosSeleccionados[i].name, e);
+        }
+      }
+
+      actualizarBarra(100);
+      await esperar(400);
+
+      if (subidas > 0) {
+        const nuevo = sumarAlContador(subidas);
+        mostrarContador(nuevo);
+        mostrarExito();
+      } else {
+        mostrarError(t('errUpload'));
+        resetearFormulario();
+      }
+
+      if (errores > 0 && subidas > 0) {
+        mostrarError(t('errPartial', { ok: subidas, fail: errores }));
+      }
+    });
+
+    function subirArchivo(archivo) {
+      return new Promise((resolve, reject) => {
+        const nombre = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+        const form   = new FormData();
+        form.append('file', archivo);
+        form.append('upload_preset', UPLOAD_PRESET);
+        form.append('folder', CARPETA);
+        form.append('public_id', nombre);
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`);
+        xhr.onload = () => xhr.status === 200
+          ? resolve(JSON.parse(xhr.responseText))
+          : reject(new Error(`Status ${xhr.status}`));
+        xhr.onerror = () => reject(new Error('Network error'));
+        xhr.send(form);
+      });
+    }
+
+    function mostrarExito() {
+      seccionSubida.style.display = 'none';
+      exitoDiv.style.display = 'block';
+    }
+
+    btnSubirMas.addEventListener('click', () => {
+      exitoDiv.style.display = 'none';
+      seccionSubida.style.display = 'block';
+      resetearFormulario();
+    });
+
+    function resetearFormulario() {
+      archivosSeleccionados = [];
+      inputFotos.value = '';
+      fotosSeleccionadas.style.display = 'none';
+      btnSubir.style.display = 'none';
+      btnSubir.disabled = false;
+      btnSubir.textContent = t('shareBtn');
+      progresoCont.style.display = 'none';
+      actualizarBarra(0);
+    }
+
+    function actualizarBarra(pct) { progresoBarra.style.width = pct + '%'; }
+    function mostrarError(msg)    { errorMsg.textContent = msg; errorMsg.style.display = 'block'; }
+    function ocultarError()       { errorMsg.style.display = 'none'; }
+    function esperar(ms)          { return new Promise(r => setTimeout(r, ms)); }
+  </script>
+
+</body>
+</html>
